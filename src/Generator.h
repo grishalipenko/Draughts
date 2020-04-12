@@ -22,6 +22,7 @@
 #define GENERATOR_H
 
 #include "Common.h"
+#include "GameEngine.h"
 #include "Game.h"
 
 class GeneratorSidebarButtons : public Widget
@@ -71,9 +72,10 @@ private:
     void importData();
     void exportData();
     
+    int currentBtn = 4;
+    GameEngine gameEngine;
     Board *board;
     GeneratorSidebar *sidebar;  
-    int current, first, me;
     Button *button[5];
 };
 

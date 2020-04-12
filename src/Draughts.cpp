@@ -27,7 +27,6 @@ Draughts::Draughts(QWidget *parent) :
     
     landing = new Landing; 
     pendingMsg = new PendingMsg;
-    generator = new Generator;
     
     connect(landing, SIGNAL(createGame(QString,QString,int,QString,QString)), this, SLOT(createGame(QString,QString,int,QString,QString)));
     connect(landing, SIGNAL(joinGame(QString,QString,int)), this, SLOT(joinGame(QString,QString,int)));
@@ -162,7 +161,8 @@ void Draughts::handleMessage(QString message)
 void Draughts::startGame(QString state)
 {
     hide();  
-    game = new Game(state, nickname[1], ip[1], nickname[0], ip[0]);
+    gameEngine = GameEngine(state);
+    game = new Game(gameEngine, nickname[1], ip[1], nickname[0], ip[0]);
     connect(game, SIGNAL(sendMessage(QString)), connection, SLOT(sendMessage(QString)));
     connect(game, SIGNAL(checkMessages()), connection, SLOT(checkReadable()));
     game->setWindowTitle(QString("Draughts [%1]").arg(nickname[0]));

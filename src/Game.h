@@ -23,15 +23,18 @@
 
 #include "Common.h"
 
+class GameEngine;
+
 class Cell : public QLabel
 {
     Q_OBJECT
 
 public:
-    explicit Cell(QColor background, int x, int y, QWidget *parent = 0);
+    explicit Cell(GameEngine &engine, QColor background, int x, int y, QWidget *parent = nullptr);
     void setOccupier(int occupier, bool king = false);
     void setFocused(bool focused);
     void setHighlighted(bool highlighted);
+    bool isHighlighted() const;
     
 signals:
     void clicked(int x, int y);    
@@ -39,15 +42,11 @@ signals:
 private:
     void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *event);
+
+    GameEngine &gameEngine;
     QColor background;
     int x, y;
-    int occupier;
-    bool died;
-    bool king;
-    bool focused, highlighted, focusable;
-    
-    friend class Game;
-    friend class Generator;
+    bool focused, highlighted;
 };
 
 class Board : public Widget
@@ -55,10 +54,9 @@ class Board : public Widget
     Q_OBJECT
 
 public:
-    explicit Board(QString state = "", QWidget *parent = 0);
+    explicit Board(GameEngine &engine, QWidget *parent = nullptr);
     
 private:
-    int role;
     Cell *cell[10][10];
     
     friend class Game;
@@ -134,13 +132,13 @@ class Game : public QDialog
     Q_OBJECT
     
 public:
-    explicit Game(QString state, QString name0, QString ip0, QString name1, QString ip1, QWidget *parent = 0);
+    explicit Game(GameEngine &engine, QString name0, QString ip0, QString name1, QString ip1, QWidget *parent = nullptr);
     void start();
     void lose(QString message = "");
     void win(QString message = "Congratulations!");  
     void draw();
     void move(bool informOpponent = true);  
-    void move(QPoint S, QPoint E, bool informOpponent = false);    
+    bool move(QPoint S, QPoint E, bool informOpponent = false);
     
 private slots:
     void clickCell(int x, int y); 
@@ -155,35 +153,19 @@ signals:
 private:
     void closeEvent(QCloseEvent *event);
     void setFocus(int x, int y, bool mustJump = false);
-    bool isEmpty(int x, int y);
-    bool isOpponent(int x, int y);
-    bool noObstruct(int x1, int y1, int x2, int y2);
-    bool clearCorpses();
     void switchCurrent();
-    void updateFocusable();
-    bool promote(QPoint p);
     void playSound(QSoundEffect *sound);
     QSoundEffect* renderSound(QString url);
-    int lengthEating(int x, int y);
-    void dfs(int x, int y, int len, int maxStep);
-    QList<QPoint> nextCells(int x, int y, bool mustJump = false);
     
+    GameEngine &gameEngine;
+
     Board *board;
     GameSidebar *gameSidebar;
-    int role, current;
     QPoint focus, lastMove;
     bool focusLocked;
-    QList<QPoint> pathBuffer;
     
     QSoundEffect *soundMove, *soundEat, *soundWin, *soundLose;
     bool sound;
-    
-    int longestEating;
-    bool nextTemp[10][10], vis[10][10];
-    QList<QPoint> path;
-    
-    const int dx[4] = {-1, -1, 1, 1};
-    const int dy[4] = {1, -1, 1, -1};    
 };
 
 #endif

@@ -5,7 +5,8 @@
 #-------------------------------------------------
 
 QT       += core gui network multimedia
-CONFIG	 += C++11
+CONFIG	 += c++17
+QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-private-field
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,6 +16,7 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     Common.cpp \
+    GameEngine.cpp \
     Landing.cpp \
     Draughts.cpp \
     CreateGameDialog.cpp \
@@ -28,6 +30,7 @@ SOURCES += main.cpp \
 HEADERS  += \
     Common.h \
     Config.h \
+    GameEngine.h \
     Landing.h \
     Draughts.h \
     CreateGameDialog.h \

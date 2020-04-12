@@ -90,11 +90,8 @@ GeneratorSidebar::GeneratorSidebar(QWidget *parent) :
 Generator::Generator(QWidget *parent) : 
     QDialog(parent)
 {
-    board = new Board();
+    board = new Board(gameEngine);
     sidebar = new GeneratorSidebar;
-    current = 4;
-    first = 0;
-    me = 0;
     
     button[0] = sidebar->buttons->buttonBlackMan;
     button[1] = sidebar->buttons->buttonBlackKing;
@@ -118,8 +115,6 @@ Generator::Generator(QWidget *parent) :
         for (int j = 0; j < 10; ++j)
             connect(board->cell[i][j], SIGNAL(clicked(int,int)), this, SLOT(clickCell(int, int)));
     
-    reset();
-    
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(board);
     layout->addWidget(sidebar);
@@ -140,19 +135,8 @@ Generator::Generator(QWidget *parent) :
 
 void Generator::reset(int role)
 {
-    me = role;
-    first = 0;
-    for (int i = 0; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-            board->cell[i][j]->setOccupier(-1);
-    for (int i = 0; i < 4; ++i)
-        for (int j = 0; j < 10; ++j)
-            if ((i + j) & 1) 
-                board->cell[i][j]->setOccupier(1 - role, false);
-    for (int i = 6; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-            if ((i + j) & 1)
-                board->cell[i][j]->setOccupier(role, false);    
+    gameEngine.reset(role);
+    board->update();
 }
 
 void Generator::importData()
@@ -165,23 +149,18 @@ void Generator::importData()
         QMessageBox::information(this, "Can't read file", "Can't read file!");
         return;
     }
-    QTextStream in(&f);
-    in >> me >> first;
-    if (me == 0)
+
+    gameEngine.readState(f.readAll());
+    if (gameEngine.role() == 0)
         sidebar->buttons->buttonMe->setText("Me: Black");
     else
         sidebar->buttons->buttonMe->setText("Me: White");
-    if (first == 0)
+    if (gameEngine.whoseTurn() == 0)
         sidebar->buttons->buttonFirst->setText("First: Black");
     else
         sidebar->buttons->buttonFirst->setText("First: White");
-    for (int i = 0; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-        {
-            int occupier, king;
-            in >> occupier >> king;
-            board->cell[i][j]->setOccupier(occupier, king);
-        }
+    board->update();
+
     f.close();
     QMessageBox::information(this, "Imported", "Imported!");
 }
@@ -206,22 +185,22 @@ void Generator::clicked(QString text)
 {
     if (text == "First: White")
     {
-        first = 0;
+        gameEngine.setWhoseTurn(0);
         sidebar->buttons->buttonFirst->setText("First: Black");
     }
     else if (text == "First: Black")
     {
-        first = 1;
+        gameEngine.setWhoseTurn(1);
         sidebar->buttons->buttonFirst->setText("First: White");
     }
     else if (text == "Me: White")
     {
-        me = 0;
+        gameEngine.setRole(0);
         sidebar->buttons->buttonMe->setText("Me: Black");
     }
     else if (text == "Me: Black")
     {
-        me = 1;
+        gameEngine.setRole(1);
         sidebar->buttons->buttonMe->setText("Me: White");
     }
     else if (text == "Clear")
@@ -241,46 +220,31 @@ void Generator::clicked(QString text)
         for (int i = 0; i < 5; ++i)
             if (button[i]->text() == text)
             {
-                current = i;
+                currentBtn = i;
                 button[i]->setStyleSheet(sidebar->buttons->buttonStyleHighlighted);
             }
             else
                 button[i]->setStyleSheet(sidebar->buttons->buttonStylePrimary);
     }
+    board->update();
 }
 
 void Generator::clickCell(int x, int y)
 {
     if ((x + y) % 2 == 0) return;
-    if (current == 4)
+    if (currentBtn == 4)
+    {
         board->cell[x][y]->setOccupier(-1);
+    }
     else
-        board->cell[x][y]->setOccupier(bool(current & 2), current & 1);
+    {
+        int color = currentBtn < 2 ? 0 : 1;
+        bool king = currentBtn % 2;
+        board->cell[x][y]->setOccupier(color, king);
+    }
 }
 
 QString Generator::state(bool opponent)
 {
-    QString res = "";
-    QTextStream out(&res);
-    if (!opponent)
-    {
-        out << me << " " << first << "\n";
-        for (int i = 0; i < 10; ++i)
-        {
-            for (int j = 0; j < 10; ++j)
-                out << (board->cell[i][j]->occupier) << " " << (board->cell[i][j]->king) << " ";
-            out << "\n";
-        }    
-    }
-    else
-    {
-        out << 1 - me << " " << first << "\n";
-        for (int i = 0; i < 10; ++i)
-        {
-            for (int j = 0; j < 10; ++j)
-                out << (board->cell[9 - i][9 - j]->occupier) << " " << (board->cell[9 - i][9 - j]->king) << " ";
-            out << "\n";
-        }            
-    }
-    return res;
+    return gameEngine.state(opponent);
 }

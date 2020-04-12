@@ -18,19 +18,17 @@
 
 **********************************************************************/ 
 
+#include "GameEngine.h"
 #include "Game.h"
 
-Cell::Cell(QColor background, int x, int y, QWidget *parent) :
-    QLabel(parent)
+Cell::Cell(GameEngine &engine, QColor background, int x, int y, QWidget *parent) :
+    QLabel(parent), gameEngine(engine)
 {
     this->background = background;
     this->x = x;
     this->y = y;
-    this->occupier = -1;
-    this->king = false;
     this->focused = false;
     this->highlighted = false;
-    this->died = false;
 }
 
 void Cell::paintEvent(QPaintEvent *)
@@ -40,18 +38,21 @@ void Cell::paintEvent(QPaintEvent *)
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(highlighted ? Config::Colors::CELL_NEXT : background));
     painter.drawRect(0, 0, width(), height());
-    if (occupier != -1) // draw piece
+
+    auto &cell = gameEngine.board.get(x, y);
+    if (!cell.isEmpty()) // draw piece
     {
         const int margin = 7;
         const int stroke = 5;
         if (focused)
             painter.setPen(QPen(Config::Colors::PIECE_FOCUSED, stroke));
-        if (occupier) 
+        auto occupier = cell.occupier();
+        if (occupier)
             painter.setBrush(QBrush(Config::Colors::PIECE_LIGHT));
         else
             painter.setBrush(QBrush(Config::Colors::PIECE_DARK));
         painter.drawEllipse(margin, margin, width() - margin * 2, height() - margin * 2);
-        if (king)
+        if (cell.isKing())
         {
             const int margin = 14;
             painter.drawPixmap(margin, margin, width() - margin * 2, height() - margin * 2,
@@ -62,8 +63,7 @@ void Cell::paintEvent(QPaintEvent *)
 
 void Cell::setOccupier(int occupier, bool king)
 {
-    this->occupier = occupier;
-    this->king = king;
+    gameEngine.board.get(x, y) = GameEngine::Cell{occupier, king};
     this->focused = this->highlighted = false;
     update();
 }
@@ -80,40 +80,29 @@ void Cell::setHighlighted(bool highlighted)
     update();
 }
 
+bool Cell::isHighlighted() const
+{
+    return highlighted;
+}
+
 void Cell::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
         emit clicked(x, y);
 }
 
-Board::Board(QString state, QWidget *parent) : 
+Board::Board(GameEngine &engine, QWidget *parent) :
     Widget(parent)
 {
-    QTextStream in(&state);
-    int current;
-    
-    if (state != "")
-        in >> (this->role) >> current;
-    
     QGridLayout *layout = new QGridLayout;    
     
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
         {
-            cell[i][j] = new Cell(((i + j) % 2) ? Config::Colors::CELL_DARK : Config::Colors::CELL_LIGHT, i, j);
+            auto background = ((i + j) % 2) ? Config::Colors::CELL_DARK : Config::Colors::CELL_LIGHT;
+            cell[i][j] = new Cell(engine, background, i, j);
             layout->addWidget(cell[i][j], i, j);
         }
-    
-    if (state != "")
-    {
-        for (int i = 0; i < 10; ++i)
-            for (int j = 0; j < 10; ++j)
-            {
-                int occupier, king;
-                in >> occupier >> king;
-                cell[i][j]->setOccupier(occupier, king);
-            }
-    }
                 
     layout->setSpacing(0);
     layout->setMargin(4);
@@ -254,13 +243,11 @@ GameSidebar::GameSidebar(QString name0, QString ip0, int role0, QString name1, Q
     setFixedWidth(200);  
 }
 
-Game::Game(QString state, QString name0, QString ip0, QString name1, QString ip1, QWidget *parent) : 
-    QDialog(parent)
+Game::Game(GameEngine &engine, QString name0, QString ip0, QString name1, QString ip1, QWidget *parent) :
+    QDialog(parent), gameEngine(engine)
 {
-    QTextStream in(&state);
-    in >> (this->role) >> current;
-    
-    board = new Board(state);
+    board = new Board(gameEngine);
+    int role = gameEngine.role();
     gameSidebar = new GameSidebar(name0, ip0, 1 - role, name1, ip1, role);
     
     sound = true;
@@ -296,136 +283,13 @@ Game::Game(QString state, QString name0, QString ip0, QString name1, QString ip1
 
 void Game::start()
 {
-    qInfo("Game started: role = %d", role);
-    
-    current ^= 1;
+    qInfo("Game started: role = %d", gameEngine.role());
+
+    gameEngine.switchWhoseTurn();
     focus = QPoint(-1, -1);
     focusLocked = false;
-    pathBuffer.clear();  
     switchCurrent();
     show();
-}
-
-bool Game::isEmpty(int x, int y)
-{
-    if (x < 0 || y < 0 || x >= 10 || y >= 10) return false;
-    return board->cell[x][y]->occupier == -1;
-}
-
-bool Game::isOpponent(int x, int y)
-{
-    if (x < 0 || y < 0 || x >= 10 || y >= 10) return false;
-    return board->cell[x][y]->occupier == 1 - role;    
-}
-
-void Game::dfs(int x, int y, int len, int maxStep)
-{
-    if (len > longestEating)
-    {
-        longestEating = len;
-        memset(nextTemp, 0, sizeof(nextTemp));
-        nextTemp[path[0].x()][path[0].y()] = true;
-    }
-    else if (len == longestEating && path.size())
-        nextTemp[path[0].x()][path[0].y()] = true;
-    
-    for (int k = 0; k < 4; ++k)
-        for (int step = 1; step <= maxStep; ++step)
-        {
-            int xx = x + dx[k] * step;
-            int yy = y + dy[k] * step;
-            
-            if (xx < 0 || yy < 0 || xx >= 10 || yy >= 10) break;
-            if (board->cell[xx][yy]->occupier != -1)
-            {
-                if (board->cell[xx][yy]->occupier == role) break;
-                if (vis[xx][yy] || board->cell[xx][yy]->died) break;
-                
-                for (int nextStep = 1; nextStep <= maxStep; ++nextStep)
-                {
-                    int xxx = xx + dx[k] * nextStep;
-                    int yyy = yy + dy[k] * nextStep;
-                    if (xxx < 0 || yyy < 0 || xxx >= 10 || yyy >= 10) break;
-                    if (board->cell[xxx][yyy]->occupier != -1) break;
-                    if (vis[xxx][yyy]) break;
-                    vis[xx][yy] = true;
-                    path.push_back(QPoint(xxx, yyy));
-                    dfs(xxx, yyy, len + 1, maxStep);
-                    path.pop_back();
-                    vis[xx][yy] = false;
-                }
-                break;
-            }
-    }
-}
-
-QList<QPoint> Game::nextCells(int x, int y, bool mustJump)
-{
-    QList<QPoint> res;
-    res.clear();
-    
-    lengthEating(x, y);
-    
-    if (longestEating)
-    {
-        for (int i = 0; i < 10; ++i)
-            for (int j = 0; j < 10; ++j)
-                if (nextTemp[i][j])
-                    res.push_back(QPoint(i, j));
-    }
-    
-    if (!mustJump && !res.size())
-    {
-        int maxStep = board->cell[x][y]->king ? 9 : 1;
-        for (int k = 0; k < ((board->cell[x][y]->king) ? 4 : 2); ++k)
-            for (int step = 1; step <= maxStep; ++step)
-            {
-                int xx = x + dx[k] * step;
-                int yy = y + dy[k] * step;
-                if (xx < 0 || yy < 0 || xx >= 10 || yy >= 10) break;
-                if (board->cell[xx][yy]->occupier != -1) break;
-                res.push_back(QPoint(xx, yy));
-            }
-    }
-    return res;
-}
-
-int Game::lengthEating(int x, int y)
-{
-    longestEating = 0;
-    path.clear();
-    memset(vis, 0, sizeof(vis));
-    int maxStep = board->cell[x][y]->king ? 9 : 1;
-    int occupier = board->cell[x][y]->occupier;
-    board->cell[x][y]->occupier = -1;
-    dfs(x, y, 0, maxStep);
-    board->cell[x][y]->occupier = occupier;
-    return longestEating;
-}
-
-void Game::updateFocusable()
-{
-    for (int i = 0; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-            board->cell[i][j]->focusable = false;
-    int length[10][10], maxLength = 0;
-    for (int i = 0; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-            if (board->cell[i][j]->occupier == role)
-            {
-                length[i][j] = lengthEating(i, j);
-                maxLength = std::max(maxLength, length[i][j]);
-            }
-    bool hasNext = false;
-    for (int i = 0; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-            if (board->cell[i][j]->occupier == role && length[i][j] == maxLength)
-            {
-                board->cell[i][j]->focusable = true;
-                hasNext = true;
-            }
-    if (!hasNext)
-        lose();
 }
 
 void Game::setFocus(int x, int y, bool mustJump)
@@ -438,10 +302,11 @@ void Game::setFocus(int x, int y, bool mustJump)
             board->cell[i][j]->setHighlighted(false);
     if (x != -1)
     {
-        QList<QPoint> next = nextCells(x, y, mustJump);
-        for (int i = 0; i < next.size(); ++i)
+        auto next = gameEngine.nextCells(x, y, mustJump);
+        int nextSize = next.size();
+        for (int i = 0; i < nextSize; ++i)
             board->cell[next[i].x()][next[i].y()]->setHighlighted(true);
-        if (mustJump && !next.size())
+        if (mustJump && !nextSize)
         {
             focus = QPoint(-1, -1);
             return;
@@ -453,26 +318,16 @@ void Game::setFocus(int x, int y, bool mustJump)
     focus = QPoint(x, y);
 }
 
-bool Game::noObstruct(int x1, int y1, int x2, int y2)
-{
-    int dx = (x1 < x2) ? 1 : -1;
-    int dy = (y1 < y2) ? 1 : -1;
-    for (int x = x1 + dx; x != x2; x += dx)
-        for (int y = y1 + dy; y != y2; y += dy)
-            if (board->cell[x][y]->occupier != -1)
-                return false;
-    return true;
-}
-
 void Game::clickCell(int x, int y)
 {
-    if (current != role) return;
-    if (board->cell[x][y]->occupier != -1)
+    if (gameEngine.whoseTurn() != gameEngine.role()) return;
+    const auto &cell = gameEngine.board.get(x, y);
+    if (!cell.isEmpty())
     {
-        if (board->cell[x][y]->occupier != role) return;
+        if (!gameEngine.isMine(x, y)) return;
         if (!focusLocked)
         {
-            if (board->cell[x][y]->focusable)
+            if (cell.isMovable())
                 setFocus(x, y);
             else
                 setFocus(-1, -1);
@@ -481,15 +336,15 @@ void Game::clickCell(int x, int y)
     else
     {
         if (focus == QPoint(-1, -1)) return;
-        if (!board->cell[x][y]->highlighted) 
+        if (!board->cell[x][y]->isHighlighted())
         {
             if (!focusLocked)
                 setFocus(-1, -1);
         }
         else
         {
-            move(focus, QPoint(x, y), true);       
-            if (noObstruct(focus.x(), focus.y(), x, y))
+            auto hasDied = move(focus, QPoint(x, y), true);
+            if (!hasDied)
             {
                 setFocus(-1, -1);
                 move();             
@@ -509,30 +364,10 @@ void Game::clickCell(int x, int y)
     }
 }
 
-bool Game::promote(QPoint p)
+bool Game::move(QPoint S, QPoint E, bool informOpponent)
 {
-    if (board->cell[p.x()][p.y()]->king)
-        return false;
-    if (p.x() == (board->cell[p.x()][p.y()]->occupier != role) * 9)
-    {
-        board->cell[p.x()][p.y()]->setOccupier(board->cell[p.x()][p.y()]->occupier, true);
-        return true;
-    }
-    else
-        return false;
-}
-
-void Game::move(QPoint S, QPoint E, bool informOpponent)
-{
-    int dx = (S.x() < E.x()) ? 1 : -1;
-    int dy = (S.y() < E.y()) ? 1 : -1;
-    for (int x = S.x() + dx; x != E.x(); x += dx)
-        for (int y = S.y() + dy; y != E.y(); y += dy)
-            if (board->cell[x][y]->occupier != -1)
-                board->cell[x][y]->died = true;
-    
-    board->cell[E.x()][E.y()]->setOccupier(board->cell[S.x()][S.y()]->occupier, board->cell[S.x()][S.y()]->king);
-    board->cell[S.x()][S.y()]->setOccupier(-1, 0);
+    bool hasDied = gameEngine.move(S, E);
+    board->update();
     
     lastMove = E;
     
@@ -545,13 +380,15 @@ void Game::move(QPoint S, QPoint E, bool informOpponent)
         out << "move " << S.x() << " " << S.y() << " " << E.x() << " " << E.y() << "\n";
         emit sendMessage(message);
     }
+
+    return hasDied;
 }
 
 void Game::move(bool informOpponent)
 {
-    int t1 = promote(lastMove);
-    int t2 = clearCorpses();
-    if (t1 || t2)
+    bool hasAchievements = gameEngine.applyMoveAchievements(lastMove);
+    board->update();
+    if (hasAchievements)
     {
         if (informOpponent)
             playSound(soundEat);
@@ -568,31 +405,22 @@ void Game::move(bool informOpponent)
 
 void Game::switchCurrent()
 {
-    current ^= 1;
+    gameEngine.switchWhoseTurn();
     focusLocked = false;
     for (int i = 0; i < 2; ++i)
-        gameSidebar->player[i]->status->setActive(current ^ i ^ role);
-    updateFocusable();
-}
-
-bool Game::clearCorpses()
-{
-    bool hasDied = false;
-    for (int i = 0; i < 10; ++i)
-        for (int j = 0; j < 10; ++j)
-            if (board->cell[i][j]->died)
-            {
-                board->cell[i][j]->setOccupier(-1);
-                board->cell[i][j]->died = false;
-                hasDied = true;
-            }
-    return hasDied;
+    {
+        bool active = gameEngine.whoseTurn() ^ i ^ gameEngine.role();
+        gameSidebar->player[i]->status->setActive(active);
+    }
+    auto hasNext = gameEngine.updateMovable();
+    if (!hasNext)
+        lose();
 }
 
 void Game::lose(QString message)
 {
-    if (current == -1) return;
-    current = -1;
+    if (gameEngine.isFinished()) return;
+    gameEngine.setFinished();
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
         {
@@ -609,8 +437,8 @@ void Game::lose(QString message)
 
 void Game::win(QString message)
 {
-    if (current == -1) return;
-    current = -1;
+    if (gameEngine.isFinished()) return;
+    gameEngine.setFinished();
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
         {
@@ -637,14 +465,14 @@ void Game::draw()
             board->cell[i][j]->setFocused(false);
             board->cell[i][j]->setHighlighted(false);
         }
-    current = -1;
+    gameEngine.setFinished();
     QMessageBox::information(this, "Draw", "<h2>Draw.</h2>");    
 }
 
 void Game::requestDraw()
 {
-    if (current == -1) return;
-    if (current == role) 
+    if (gameEngine.isFinished()) return;
+    if (gameEngine.whoseTurn() == gameEngine.role())
     {
         QMessageBox::information(this, "Can't Draw", "Please finish your operation first.");
         return;
@@ -660,7 +488,7 @@ void Game::requestDraw()
 
 bool Game::resign()
 {
-    if (current == -1) return true;
+    if (gameEngine.isFinished()) return true;
     int ret = QMessageBox::warning(this, "Resign", "Do you really want to resign?", QMessageBox::Yes | QMessageBox::No);
     if (ret == QMessageBox::Yes)
     {

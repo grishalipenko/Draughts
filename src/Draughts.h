@@ -26,8 +26,8 @@
 #include "Server.h"
 #include "Client.h"
 #include "Connection.h"
+#include "GameEngine.h"
 #include "Game.h"
-#include "Generator.h"
 
 class Draughts : public QDialog
 {
@@ -52,8 +52,8 @@ private:
     Server *server;
     Client *client;
     Connection *connection;
+    GameEngine gameEngine;
     Game *game;
-    Generator *generator;
     
     QString nickname[2], ip[2], stateMe, stateOpponent;
     int side; // whether is server or client
