@@ -6,7 +6,7 @@
 
 QT       += core gui network multimedia
 CONFIG	 += c++17
-QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-private-field
+#CONFIG	 += sanitizer sanitize_address
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

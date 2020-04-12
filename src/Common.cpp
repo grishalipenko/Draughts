@@ -28,9 +28,10 @@ Widget::Widget(QWidget *parent) :
 // to enable stylesheet for the widget
 void Widget::paintEvent(QPaintEvent *)
 {
-    QStyleOption* option = new QStyleOption;
-    option->init(this);
-    style()->drawPrimitive(QStyle::PE_Widget, option, new QPainter(this), this);
+    QPainter painter(this);
+    QStyleOption option;
+    option.init(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
 }    
 
 Button::Button(QWidget *parent) :

@@ -93,9 +93,9 @@ void Landing::clicked(const QString &text)
 QLabel* Landing::renderTitle()
 {
     QLabel *title = new QLabel();
-    QPixmap *pixmap = new QPixmap(":/icons/title.png");
-    title->setPixmap(*pixmap);
-    title->setFixedHeight(pixmap->height());
+    QPixmap pixmap(":/icons/title.png");
+    title->setPixmap(pixmap);
+    title->setFixedHeight(pixmap.height());
     title->setAlignment(Qt::AlignCenter);
     return title;
 }
