@@ -9,7 +9,7 @@
 class GameEngine
 {
 public:
-    template<typename T>
+    template<typename T, typename Dummy = void> // workaround for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85282
     class Board
     {
         std::array<T, 10 * 10> container;
@@ -30,8 +30,8 @@ public:
         }
     };
 
-    template<>
-    class Board<bool>
+    template<typename Dummy>
+    class Board<bool, Dummy>
     {
         std::bitset<10 * 10> container;
     public:
