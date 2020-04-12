@@ -29,7 +29,7 @@ class LandingButtons : public Widget
     Q_OBJECT
     
 public:
-    explicit LandingButtons(QWidget *parent = 0);    
+    explicit LandingButtons(QWidget *parent = nullptr);
     
 private:
     Button* renderButton(const QString &text);
@@ -43,7 +43,7 @@ class Landing : public QDialog
     Q_OBJECT
     
 public:
-    explicit Landing(QWidget *parent = 0);
+    explicit Landing(QWidget *parent = nullptr);
     
 private slots:
     void clicked(const QString &text);
@@ -64,7 +64,7 @@ class PendingMsg : public QDialog
     Q_OBJECT
 
 public:
-    explicit PendingMsg(QWidget *parent = 0);    
+    explicit PendingMsg(QWidget *parent = nullptr);
     void setIp(QString ip);
     void setPort(int port);
     

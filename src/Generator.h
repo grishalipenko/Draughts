@@ -29,7 +29,7 @@ class GeneratorSidebarButtons : public Widget
     Q_OBJECT
 
 public:
-    explicit GeneratorSidebarButtons(QWidget *parent = 0);    
+    explicit GeneratorSidebarButtons(QWidget *parent = nullptr);
     
 private:
     Button* renderButton(QString text);
@@ -46,7 +46,7 @@ class GeneratorSidebar : public Widget
     Q_OBJECT
     
 public:
-    explicit GeneratorSidebar(QWidget *parent = 0);
+    explicit GeneratorSidebar(QWidget *parent = nullptr);
     
 private:
     GeneratorSidebarButtons *buttons;   
@@ -59,7 +59,7 @@ class Generator : public QDialog
     Q_OBJECT
     
 public:    
-    explicit Generator(QWidget *parent = 0);
+    explicit Generator(QWidget *parent = nullptr);
     QString state(bool opponent = false);   
     void reset(int role = 0);
     

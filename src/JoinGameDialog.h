@@ -32,7 +32,7 @@ class JoinGameDialog : public QDialog
     Q_OBJECT
     
 public:
-    explicit JoinGameDialog(QWidget *parent = 0);
+    explicit JoinGameDialog(QWidget *parent = nullptr);
     ~JoinGameDialog();
     QString ip();
     QString nickname();

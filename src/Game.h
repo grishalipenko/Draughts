@@ -70,7 +70,7 @@ class GameSidebarPlayerStatus : public QLabel
     Q_OBJECT
 
 public:
-    explicit GameSidebarPlayerStatus(int role, QWidget *parent = 0);    
+    explicit GameSidebarPlayerStatus(int role, QWidget *parent = nullptr);
     void setActive(bool active);    
     void setWinner();
     
@@ -89,7 +89,7 @@ class GameSidebarPlayer : public Widget
     Q_OBJECT
 
 public:
-    explicit GameSidebarPlayer(QString name, QString ip, int role, QWidget *parent = 0);   
+    explicit GameSidebarPlayer(QString name, QString ip, int role, QWidget *parent = nullptr);
     
 private:
     QLabel* renderText(QString text);
@@ -105,7 +105,7 @@ class GameSidebarButtons : public Widget
     Q_OBJECT
 
 public:
-    explicit GameSidebarButtons(QWidget *parent = 0);    
+    explicit GameSidebarButtons(QWidget *parent = nullptr);
     
 private:
     Button* renderButton(QString text);
@@ -120,7 +120,7 @@ class GameSidebar : public Widget
     Q_OBJECT
     
 public:    
-    explicit GameSidebar(QString name0, QString ip0, int role0, QString name1, QString ip1, int role1, QWidget *parent = 0);
+    explicit GameSidebar(QString name0, QString ip0, int role0, QString name1, QString ip1, int role1, QWidget *parent = nullptr);
     
 private:
     GameSidebarPlayer *player[2];  

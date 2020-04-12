@@ -27,7 +27,7 @@ class Widget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Widget(QWidget *parent = 0);
+    explicit Widget(QWidget *parent = nullptr);
     
 protected:
     void paintEvent(QPaintEvent*);    
@@ -39,8 +39,8 @@ class Button : public QLabel
     Q_OBJECT
     
 public:
-    explicit Button(QWidget *parent = 0);
-    explicit Button(const QString &text, QWidget *parent = 0);
+    explicit Button(QWidget *parent = nullptr);
+    explicit Button(const QString &text, QWidget *parent = nullptr);
     
 signals:
     void clicked(const QString &text); 

@@ -33,7 +33,7 @@ class CreateGameDialog : public QDialog
     Q_OBJECT
     
 public:
-    explicit CreateGameDialog(QWidget *parent = 0);
+    explicit CreateGameDialog(QWidget *parent = nullptr);
     ~CreateGameDialog();
     QString ip();
     QString nickname();

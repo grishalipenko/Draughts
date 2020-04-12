@@ -34,7 +34,7 @@ class Draughts : public QDialog
     Q_OBJECT
     
 public:
-    explicit Draughts(QWidget *parent = 0);
+    explicit Draughts(QWidget *parent = nullptr);
     
 private slots:
     void createGame(QString nickname, QString ip, int port, QString stateMe, QString stateOpponent);     
