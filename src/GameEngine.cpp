@@ -294,13 +294,15 @@ bool GameEngine::move(QPoint S, QPoint E)
     auto hasDied = false;
     int dx = (S.x() < E.x()) ? 1 : -1;
     int dy = (S.y() < E.y()) ? 1 : -1;
-    for (int x = S.x() + dx; x != E.x(); x += dx)
-        for (int y = S.y() + dy; y != E.y(); y += dy)
-            if (!board.get(x, y).isEmpty())
-            {
-                board.get(x, y).setDied(true);
-                hasDied = true;
-            }
+    for (int x = S.x() + dx, y = S.y() + dy; x != E.x() && y != E.y(); x += dx, y += dy)
+    {
+        auto &cell = board.get(x, y);
+        if (!cell.isEmpty())
+        {
+            cell.setDied(true);
+            hasDied = true;
+        }
+    }
 
     auto &startCell = board.get(S.x(), S.y());
     auto &endCell = board.get(E.x(), E.y());
