@@ -99,21 +99,21 @@ Generator::Generator(QWidget *parent) :
     button[3] = sidebar->buttons->buttonWhiteKing;
     button[4] = sidebar->buttons->buttonErase;
     
-    connect(sidebar->buttons->buttonFirst, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonMe, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonWhiteMan, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonWhiteKing, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonBlackMan, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonBlackKing, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonErase, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonClear, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonImport, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonExport, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(sidebar->buttons->buttonDone, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
+    connect(sidebar->buttons->buttonFirst, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonMe, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonWhiteMan, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonWhiteKing, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonBlackMan, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonBlackKing, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonErase, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonClear, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonImport, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonExport, &Button::clicked, this, &Generator::clicked);
+    connect(sidebar->buttons->buttonDone, &Button::clicked, this, &Generator::clicked);
     
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
-            connect(board->cell[i][j], SIGNAL(clicked(int,int)), this, SLOT(clickCell(int, int)));
+            connect(board->cell[i][j], &Cell::clicked, this, &Generator::clickCell);
     
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(board);

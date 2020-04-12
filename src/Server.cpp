@@ -25,7 +25,7 @@ Server::Server(QString ip, int port)
     listenSocket = new QTcpServer;
     listenSocket->listen(QHostAddress(ip), port);
     qInfo("Server is listening at %s:%d...", ip.toStdString().c_str(), port);
-    connect(listenSocket, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
+    connect(listenSocket, &QTcpServer::newConnection, this, &Server::acceptConnection);
 }
 
 void Server::acceptConnection()

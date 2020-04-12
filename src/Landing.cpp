@@ -28,10 +28,10 @@ Landing::Landing(QWidget *parent) :
     buttons = new LandingButtons;
     generator = new Generator(this);
     
-    connect(buttons->buttonCreate, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(buttons->buttonJoin, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(buttons->buttonAbout, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
-    connect(buttons->buttonQuit, SIGNAL(clicked(QString)), this, SLOT(clicked(QString)));
+    connect(buttons->buttonCreate, &Button::clicked, this, &Landing::clicked);
+    connect(buttons->buttonJoin, &Button::clicked, this, &Landing::clicked);
+    connect(buttons->buttonAbout, &Button::clicked, this, &Landing::clicked);
+    connect(buttons->buttonQuit, &Button::clicked, this, &Landing::clicked);
     
     QVBoxLayout *mainLayout = new QVBoxLayout;
     
@@ -150,7 +150,7 @@ PendingMsg::PendingMsg(QWidget *parent) :
                           "font-size: 20px;");
     button->setFixedHeight(40);
     button->setFixedWidth(115);
-    connect(button, SIGNAL(clicked(QString)), this, SLOT(clicked()));
+    connect(button, &Button::clicked, this, &PendingMsg::clicked);
     
     QWidget *buttonBox = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout;

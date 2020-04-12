@@ -23,7 +23,7 @@
 Connection::Connection(QTcpSocket *socket)
 {
     this->socket = socket;
-    connect(socket, SIGNAL(readyRead()), this, SLOT(recvMessage()));    
+    connect(socket, &QTcpSocket::readyRead, this, &Connection::recvMessage);
 }
 
 void Connection::recvMessage()

@@ -28,9 +28,9 @@ Draughts::Draughts(QWidget *parent) :
     landing = new Landing; 
     pendingMsg = new PendingMsg;
     
-    connect(landing, SIGNAL(createGame(QString,QString,int,QString,QString)), this, SLOT(createGame(QString,QString,int,QString,QString)));
-    connect(landing, SIGNAL(joinGame(QString,QString,int)), this, SLOT(joinGame(QString,QString,int)));
-    connect(pendingMsg, SIGNAL(canceled()), this, SLOT(returnToHome()));
+    connect(landing, &Landing::createGame, this, &Draughts::createGame);
+    connect(landing, &Landing::joinGame, this, &Draughts::joinGame);
+    connect(pendingMsg, &PendingMsg::canceled, this, &Draughts::returnToHome);
     
     stackedWidget = new QStackedWidget();
     stackedWidget->addWidget(landing);
@@ -66,7 +66,7 @@ void Draughts::createGame(QString nickname, QString ip, int port, QString stateM
     this->stateOpponent = stateOpponent;
     side = 0;
     server = new Server(ip, port);
-    connect(server, SIGNAL(connected(QString)), this, SLOT(clientJoined(QString)));
+    connect(server, &Server::connected, this, &Draughts::clientJoined);
     
     pendingMsg->setIp(ip);
     pendingMsg->setPort(port);    
@@ -80,7 +80,7 @@ void Draughts::joinGame(QString nickname, QString ip, int port)
     side = 1;
     client = new Client(ip, port);
     connection = new Connection(client->socket());
-    connect(connection, SIGNAL(receivedMessage(QString)), this, SLOT(handleMessage(QString)));
+    connect(connection, &Connection::receivedMessage, this, &Draughts::handleMessage);
     
     pendingMsg->setIp(ip);
     pendingMsg->setPort(port);
@@ -92,7 +92,7 @@ void Draughts::clientJoined(QString ip)
     this->ip[1] = ip;
     connection = new Connection(server->socket());  
     qInfo("Client joined: %s", server->socket()->peerAddress().toString().toStdString().c_str());
-    connect(connection, SIGNAL(receivedMessage(QString)), this, SLOT(handleMessage(QString)));
+    connect(connection, &Connection::receivedMessage, this, &Draughts::handleMessage);
     connection->sendMessage(QString("server %1 %2").arg(nickname[0]).arg(this->ip[1]));
 }
 
@@ -163,8 +163,8 @@ void Draughts::startGame(QString state)
     hide();  
     gameEngine = GameEngine(state);
     game = new Game(gameEngine, nickname[1], ip[1], nickname[0], ip[0]);
-    connect(game, SIGNAL(sendMessage(QString)), connection, SLOT(sendMessage(QString)));
-    connect(game, SIGNAL(checkMessages()), connection, SLOT(checkReadable()));
+    connect(game, &Game::sendMessage, connection, &Connection::sendMessage);
+    connect(game, &Game::checkMessages, connection, &Connection::checkReadable);
     game->setWindowTitle(QString("Draughts [%1]").arg(nickname[0]));
     game->start();
 }

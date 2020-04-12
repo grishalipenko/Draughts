@@ -256,13 +256,13 @@ Game::Game(GameEngine &engine, QString name0, QString ip0, QString name1, QStrin
     soundWin = renderSound(":/sounds/win.wav");
     soundLose = renderSound(":/sounds/lose.wav");
     
-    connect(gameSidebar->buttons->buttonRequestDraw, SIGNAL(clicked(QString)), this, SLOT(requestDraw()));
-    connect(gameSidebar->buttons->buttonResign, SIGNAL(clicked(QString)), this, SLOT(resign()));
-    connect(gameSidebar->buttons->buttonSound, SIGNAL(clicked(QString)), this, SLOT(switchSound(QString)));
+    connect(gameSidebar->buttons->buttonRequestDraw, &Button::clicked, this, &Game::requestDraw);
+    connect(gameSidebar->buttons->buttonResign, &Button::clicked, this, &Game::resign);
+    connect(gameSidebar->buttons->buttonSound, &Button::clicked, this, &Game::switchSound);
     
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
-            connect(board->cell[i][j], SIGNAL(clicked(int,int)), this, SLOT(clickCell(int, int)));
+            connect(board->cell[i][j], &Cell::clicked, this, &Game::clickCell);
     
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(board);
