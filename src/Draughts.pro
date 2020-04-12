@@ -39,7 +39,8 @@ HEADERS  += \
     Client.h \
     Connection.h \
     Game.h \
-    Generator.h
+    Generator.h \
+    utils/SmallVector.h
 
 FORMS    += \
     CreateGameDialog.ui \

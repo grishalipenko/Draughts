@@ -222,9 +222,9 @@ bool GameEngine::updateMovable()
     return hasNext;
 }
 
-std::vector<QPoint> GameEngine::nextCells(int x, int y, bool mustJump)
+vector<QPoint> GameEngine::nextCells(int x, int y, bool mustJump)
 {
-    std::vector<QPoint> res;
+    vector<QPoint> res;
 
     lengthEating(x, y);
 

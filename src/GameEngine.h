@@ -1,10 +1,13 @@
 #pragma once
 
-#include <vector>
 #include <array>
 #include <bitset>
 #include <QString>
 #include <QPoint>
+#include "utils/SmallVector.h"
+
+template<typename T>
+using vector = SmallVector<T, 2>;
 
 class GameEngine
 {
@@ -83,7 +86,7 @@ public:
     void setFinished();
     bool isFinished() const;
     bool updateMovable(); // returns true if has next move
-    std::vector<QPoint> nextCells(int x, int y, bool mustJump = false);
+    vector<QPoint> nextCells(int x, int y, bool mustJump = false);
     bool move(QPoint S, QPoint E); // returns true if has died
     bool applyMoveAchievements(QPoint lastMove); // returns true if has some achievement
 
@@ -96,7 +99,7 @@ private:
 
     int longestEating = 0;
     Board<bool> nextTemp, vis;
-    std::vector<QPoint> path;
+    vector<QPoint> path;
 
     int lengthEating(int x, int y);
     void dfs(int x, int y, int len, int maxStep);
