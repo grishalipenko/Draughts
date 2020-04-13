@@ -61,7 +61,7 @@ class Generator : public QDialog
     
 public:    
     explicit Generator(QWidget *parent = nullptr);
-    QString state(bool opponent = false);   
+    const GameEngine &engine() const;
     void reset(int role = 0);
     
 private slots:

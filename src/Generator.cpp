@@ -176,7 +176,7 @@ void Generator::exportData()
         return;
     }
     QTextStream out(&f);
-    out << state();
+    out << gameEngine.state();
     f.close();
     QMessageBox::information(this, "Exported", "Exported!");
 }
@@ -244,7 +244,7 @@ void Generator::clickCell(int x, int y)
     }
 }
 
-QString Generator::state(bool opponent)
+const GameEngine &Generator::engine() const
 {
-    return gameEngine.state(opponent);
+    return gameEngine;
 }

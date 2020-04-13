@@ -104,8 +104,14 @@ int GameEngine::role() const
 
 void GameEngine::setRole(int role)
 {
+    if (me != role)
+        transpose();
     me = role;
-    transpose();
+}
+
+void GameEngine::changeRole()
+{
+    setRole(1 - role());
 }
 
 int GameEngine::whoseTurn() const
@@ -132,6 +138,11 @@ bool GameEngine::isFinished() const
 void GameEngine::switchWhoseTurn()
 {
     setWhoseTurn(current ^ 1);
+}
+
+bool GameEngine::isMyTurn() const
+{
+    return whoseTurn() == role();
 }
 
 constexpr int dx[4] = {-1, -1, 1, 1};

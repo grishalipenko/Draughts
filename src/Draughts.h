@@ -29,6 +29,8 @@
 #include "GameEngine.h"
 #include "Game.h"
 
+class AIManager;
+
 class Draughts : public QDialog
 {
     Q_OBJECT
@@ -37,12 +39,13 @@ public:
     explicit Draughts(QWidget *parent = nullptr);
     
 private slots:
-    void createGame(QString nickname, QString ip, int port, QString stateMe, QString stateOpponent);     
+    void createGameVsAI(const GameEngine &engine);
+    void createGame(QString nickname, QString ip, int port, const GameEngine &engine);
     void joinGame(QString nickname, QString ip, int port);
     void handleMessage(QString message);
     void clientJoined(QString ip);
     void initGame();
-    void startGame(QString state);    
+    void startGame();
     void returnToHome();
     
 private:      
@@ -52,11 +55,23 @@ private:
     Server *server;
     Client *client;
     Connection *connection;
+    AIManager *AI = nullptr;
     GameEngine gameEngine;
     Game *game;
     
-    QString nickname[2], ip[2], stateMe, stateOpponent;
-    int side; // whether is server or client
+    QString nickname[2], ip[2];
+
+    enum class GameMode
+    {
+        versusAI, online
+    };
+    GameMode mode = GameMode::online;
+
+    enum class Side
+    {
+        server, client
+    };
+    Side side;
 };
 
 #endif

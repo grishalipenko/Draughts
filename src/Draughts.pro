@@ -6,7 +6,7 @@
 
 QT       += core gui network multimedia
 CONFIG	 += c++17
-#CONFIG	 += sanitizer sanitize_address
+CONFIG	 += sanitizer sanitize_address
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,6 +15,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
+    AIManager.cpp \
     Common.cpp \
     GameEngine.cpp \
     Landing.cpp \
@@ -28,6 +29,7 @@ SOURCES += main.cpp \
     Generator.cpp
 
 HEADERS  += \
+    AIManager.h \
     Common.h \
     Config.h \
     GameEngine.h \
@@ -40,6 +42,7 @@ HEADERS  += \
     Connection.h \
     Game.h \
     Generator.h \
+    Vector.h \
     utils/SmallVector.h
 
 FORMS    += \

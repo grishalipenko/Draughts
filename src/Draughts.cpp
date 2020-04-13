@@ -19,6 +19,7 @@
 **********************************************************************/ 
 
 #include "Draughts.h"
+#include "AIManager.h"
 
 Draughts::Draughts(QWidget *parent) : 
     QDialog(parent)
@@ -28,6 +29,7 @@ Draughts::Draughts(QWidget *parent) :
     landing = new Landing; 
     pendingMsg = new PendingMsg;
     
+    connect(landing, &Landing::createGameVsAI, this, &Draughts::createGameVsAI);
     connect(landing, &Landing::createGame, this, &Draughts::createGame);
     connect(landing, &Landing::joinGame, this, &Draughts::joinGame);
     connect(pendingMsg, &PendingMsg::canceled, this, &Draughts::returnToHome);
@@ -49,22 +51,37 @@ Draughts::Draughts(QWidget *parent) :
     setStyleSheet("QDialog { background: " + Config::Colors::BACKGROUND + "; }");       
 }
 
+void Draughts::createGameVsAI(const GameEngine &engine)
+{
+    mode = GameMode::versusAI;
+    gameEngine = engine;
+    nickname[0] = "You";
+    nickname[1] = "AI";
+    ip[0] = ip[1] = QString{};
+    startGame();
+}
+
 void Draughts::returnToHome()
 {
-    if (side == 0)
+    switch (side)
+    {
+    case Side::server:
         server->close();
-    else
+        break;
+    case Side::client:
         client->close();
+        break;
+    }
     stackedWidget->setCurrentIndex(0);
 }
 
-void Draughts::createGame(QString nickname, QString ip, int port, QString stateMe, QString stateOpponent)
+void Draughts::createGame(QString nickname, QString ip, int port, const GameEngine &engine)
 {
+    mode = GameMode::online;
     this->ip[0] = ip;
     this->nickname[0] = nickname;
-    this->stateMe = stateMe;
-    this->stateOpponent = stateOpponent;
-    side = 0;
+    gameEngine = engine;
+    side = Side::server;
     server = new Server(ip, port);
     connect(server, &Server::connected, this, &Draughts::clientJoined);
     
@@ -75,9 +92,10 @@ void Draughts::createGame(QString nickname, QString ip, int port, QString stateM
 
 void Draughts::joinGame(QString nickname, QString ip, int port)
 {
+    mode = GameMode::online;
     this->nickname[0] = nickname;
     this->ip[1] = ip;
-    side = 1;
+    side = Side::client;
     client = new Client(ip, port);
     connection = new Connection(client->socket());
     connect(connection, &Connection::receivedMessage, this, &Draughts::handleMessage);
@@ -118,9 +136,8 @@ void Draughts::handleMessage(QString message)
         }
         else if (operation == "start")
         {
-            QString state;
-            state = in.readAll();
-            startGame(state);
+            gameEngine.readState(in.readAll());
+            startGame();
         }
         else if (operation == "move")
         {
@@ -129,7 +146,7 @@ void Draughts::handleMessage(QString message)
             game->move(QPoint(9 - sx, 9 - sy), QPoint(9 - ex, 9 - ey));
         }
         else if (operation == "endMove")
-            game->move(false);
+            game->endMove(false);
         else if (operation == "finish")
             game->win();
         else if (operation == "requestDraw")
@@ -158,20 +175,35 @@ void Draughts::handleMessage(QString message)
     connection->checkReadable();
 }
 
-void Draughts::startGame(QString state)
+void Draughts::startGame()
 {
-    hide();  
-    gameEngine = GameEngine(state);
+    hide();
     game = new Game(gameEngine, nickname[1], ip[1], nickname[0], ip[0]);
-    connect(game, &Game::sendMessage, connection, &Connection::sendMessage);
-    connect(game, &Game::checkMessages, connection, &Connection::checkReadable);
-    game->setWindowTitle(QString("Draughts [%1]").arg(nickname[0]));
+
+    QString title = "Draughts";
+    switch (mode)
+    {
+    case GameMode::online:
+        {
+            connect(game, &Game::sendMessage, connection, &Connection::sendMessage);
+            connect(game, &Game::checkMessages, connection, &Connection::checkReadable);
+            title += QString(" [%1]").arg(nickname[0]);
+            break;
+        }
+    case GameMode::versusAI:
+        {
+            AI = new AIManager(gameEngine, game, this);
+            break;
+        }
+    }
+
+    game->setWindowTitle(title);
     game->start();
 }
 
 void Draughts::initGame()
 {
     hide();    
-    connection->sendMessage("start " + stateOpponent);
-    startGame(stateMe);
+    connection->sendMessage("start " + gameEngine.state(true));
+    startGame();
 }

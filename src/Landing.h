@@ -33,7 +33,7 @@ public:
     
 private:
     Button* renderButton(const QString &text);
-    Button *buttonCreate, *buttonJoin, *buttonAbout, *buttonQuit;
+    Button *buttonAI, *buttonCreate, *buttonJoin, *buttonAbout, *buttonQuit;
     
     friend class Landing;
 };
@@ -49,7 +49,8 @@ private slots:
     void clicked(const QString &text);
 
 signals:
-    void createGame(QString nickname, QString ip, int port, QString stateMe, QString stateOpponent);
+    void createGameVsAI(const GameEngine &engine);
+    void createGame(QString nickname, QString ip, int port, const GameEngine &engine);
     void joinGame(QString nickname, QString ip, int port);
     
 private:

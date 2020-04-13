@@ -28,6 +28,7 @@ Landing::Landing(QWidget *parent) :
     buttons = new LandingButtons;
     generator = new Generator(this);
     
+    connect(buttons->buttonAI, &Button::clicked, this, &Landing::clicked);
     connect(buttons->buttonCreate, &Button::clicked, this, &Landing::clicked);
     connect(buttons->buttonJoin, &Button::clicked, this, &Landing::clicked);
     connect(buttons->buttonAbout, &Button::clicked, this, &Landing::clicked);
@@ -48,32 +49,30 @@ Landing::Landing(QWidget *parent) :
 
 void Landing::clicked(const QString &text)
 {
-    if (text == "Create Game")
+    if (text == "Create Game vs. AI")
+    {
+        generator->reset();
+        emit createGameVsAI(generator->engine());
+    }
+    else if (text == "Create Online Game")
     {
         CreateGameDialog *dialog = new CreateGameDialog(this);
         if (dialog->exec() == QDialog::Rejected) return;
         else
         {
-            QString stateMe, stateOpponent;
             if (dialog->mode() == "Standard")
             {
                 srand(unsigned(time(0)));
                 int role = rand() % 2;
                 generator->reset(role);
-                stateMe = generator->state();
-                stateOpponent = generator->state(true);
             }
             else
             {
                 generator->reset();
-                if (generator->exec() == QDialog::Accepted)
-                {
-                    stateMe = generator->state();
-                    stateOpponent = generator->state(true);
-                }
-                else return;
+                if (generator->exec() != QDialog::Accepted)
+                    return;
             }
-            emit createGame(dialog->nickname(), dialog->ip(), dialog->port(), stateMe, stateOpponent);
+            emit createGame(dialog->nickname(), dialog->ip(), dialog->port(), generator->engine());
         }
     }
     else if (text == "Join Game")
@@ -103,13 +102,15 @@ QLabel* Landing::renderTitle()
 LandingButtons::LandingButtons(QWidget *parent) :
     Widget(parent)
 {
-    buttonCreate = renderButton("Create Game");
+    buttonAI = renderButton("Create Game vs. AI");
+    buttonCreate = renderButton("Create Online Game");
     buttonJoin = renderButton("Join Game");
     buttonAbout = renderButton("About");
     buttonQuit = renderButton("Quit");
         
     QVBoxLayout *mainLayout = new QVBoxLayout;
     
+    mainLayout->addWidget(buttonAI);
     mainLayout->addWidget(buttonCreate);
     mainLayout->addWidget(buttonJoin);
     mainLayout->addWidget(buttonAbout);
@@ -128,7 +129,7 @@ Button* LandingButtons::renderButton(const QString &text)
     button->setStyleSheet(button->styleSheet() + 
                           "font-size: 24px;");
     button->setFixedHeight(65);
-    button->setFixedWidth(195);
+    button->setFixedWidth(250);
     return button;
 }
 

@@ -168,7 +168,7 @@ GameSidebarPlayer::GameSidebarPlayer(QString name, QString ip, int role, QWidget
 {
     status = new GameSidebarPlayerStatus(role);
     this->name = renderText(name);
-    this->ip = renderText(QString("IP: %1").arg(ip));
+    this->ip = renderText(ip.isEmpty() ? ip : QString("IP: %1").arg(ip));
     
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(status);
@@ -320,7 +320,7 @@ void Game::setFocus(int x, int y, bool mustJump)
 
 void Game::clickCell(int x, int y)
 {
-    if (gameEngine.whoseTurn() != gameEngine.role()) return;
+    if (!gameEngine.isMyTurn()) return;
     const auto &cell = gameEngine.board.get(x, y);
     if (!cell.isEmpty())
     {
@@ -347,13 +347,13 @@ void Game::clickCell(int x, int y)
             if (!hasDied)
             {
                 setFocus(-1, -1);
-                move();             
+                endMove();
             }
             else
             {
                 setFocus(x, y, true);
                 if (focus == QPoint(-1, -1))
-                    move();
+                    endMove();
                 else
                 {
                     playSound(soundMove);
@@ -384,7 +384,7 @@ bool Game::move(QPoint S, QPoint E, bool informOpponent)
     return hasDied;
 }
 
-void Game::move(bool informOpponent)
+void Game::endMove(bool informOpponent)
 {
     bool hasAchievements = gameEngine.applyMoveAchievements(lastMove);
     board->update();
@@ -415,6 +415,9 @@ void Game::switchCurrent()
     auto hasNext = gameEngine.updateMovable();
     if (!hasNext)
         lose();
+
+    if (!gameEngine.isMyTurn())
+        emit sendMessage("wait");
 }
 
 void Game::lose(QString message)
@@ -472,7 +475,7 @@ void Game::draw()
 void Game::requestDraw()
 {
     if (gameEngine.isFinished()) return;
-    if (gameEngine.whoseTurn() == gameEngine.role())
+    if (gameEngine.isMyTurn())
     {
         QMessageBox::information(this, "Can't Draw", "Please finish your operation first.");
         return;

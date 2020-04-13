@@ -137,7 +137,7 @@ public:
     void lose(QString message = "");
     void win(QString message = "Congratulations!");  
     void draw();
-    void move(bool informOpponent = true);  
+    void endMove(bool informOpponent = true);
     bool move(QPoint S, QPoint E, bool informOpponent = false);
     
 private slots:

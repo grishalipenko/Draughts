@@ -4,10 +4,7 @@
 #include <bitset>
 #include <QString>
 #include <QPoint>
-#include "utils/SmallVector.h"
-
-template<typename T>
-using vector = SmallVector<T, 2>;
+#include "Vector.h"
 
 class GameEngine
 {
@@ -79,10 +76,12 @@ public:
 
     int role() const;
     void setRole(int role);
+    void changeRole();
     bool isMine(int x, int y) const;
     int whoseTurn() const;
     void setWhoseTurn(int whoseTurn);
     void switchWhoseTurn();
+    bool isMyTurn() const;
     void setFinished();
     bool isFinished() const;
     bool updateMovable(); // returns true if has next move
@@ -90,7 +89,7 @@ public:
     bool move(QPoint S, QPoint E); // returns true if has died
     bool applyMoveAchievements(QPoint lastMove); // returns true if has some achievement
 
-    QString state(bool opponent) const;
+    QString state(bool opponent = false) const;
     void readState(QString state);
     void transpose();
 
